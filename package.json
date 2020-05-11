@@ -1,0 +1,27 @@
+{
+  "name": "meta-compare",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "autoprefixer": "^9.7.6",
+    "isomorphic-unfetch": "^3.0.0",
+    "next": "9.3.6",
+    "postcss-import": "^12.0.1",
+    "puppeteer": "^3.0.4",
+    "react": "16.13.1",
+    "react-diff-viewer": "^3.0.2",
+    "react-dom": "16.13.1",
+    "swr": "^0.2.0",
+    "tailwindcss": "^1.4.6"
+  },
+  "devDependencies": {
+    "@types/node": "^13.13.5",
+    "@types/react": "^16.9.35",
+    "typescript": "^3.8.3"
+  }
+}

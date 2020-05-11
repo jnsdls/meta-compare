@@ -1,4 +1,5 @@
-import puppeteer from "puppeteer";
+const chromium = require("chrome-aws-lambda");
+import puppeteer from "puppeteer-core";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const FBCrawlerUserAgent = "facebookexternalhit/1.1";
@@ -13,7 +14,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     url = [url];
   }
 
-  const browser = await puppeteer.launch();
+  const browser = await chromium.puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath,
+    headless: chromium.headless,
+    ignoreHTTPSErrors: true,
+  });
   const page = await browser.newPage();
   page.setUserAgent(FBCrawlerUserAgent);
 

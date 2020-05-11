@@ -41,10 +41,10 @@ const CompareTwo: NextPage<CompareTwoPageProps> = () => {
 
   return (
     <>
+      <DiffView metaData={data.metaTags} metaKey={MetaKey.GENERAL} />
       <DiffView metaData={data.metaTags} metaKey={MetaKey.OG} />
       <DiffView metaData={data.metaTags} metaKey={MetaKey.TWITTER} />
-      <DiffView metaData={data.metaTags} metaKey={MetaKey.APPLINK} />
-      <DiffView metaData={data.metaTags} metaKey={MetaKey.OTHER} />
+      <DiffView metaData={data.metaTags} metaKey={MetaKey.JSONLD} />
     </>
   );
 };

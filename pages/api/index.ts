@@ -1,6 +1,6 @@
-const chromium = require("chrome-aws-lambda");
-import puppeteer from "puppeteer-core";
 import { NextApiRequest, NextApiResponse } from "next";
+import scrape from "html-metadata";
+import sortobject from "deep-sort-object";
 
 const FBCrawlerUserAgent = "facebookexternalhit/1.1";
 
@@ -14,114 +14,19 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     url = [url];
   }
 
-  const browser = await chromium.puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath,
-    headless: chromium.headless,
-    ignoreHTTPSErrors: true,
-  });
-  const page = await browser.newPage();
-  page.setUserAgent(FBCrawlerUserAgent);
-
   const metaTags = {};
 
   for (const u of url) {
-    const urlMetatags = await getParsedMetaTags(page, u);
-    metaTags[u] = urlMetatags;
+    var options = {
+      url: u,
+      headers: {
+        "User-Agent": FBCrawlerUserAgent,
+      },
+    };
+    const urlMetatags = await scrape(options);
+    metaTags[u] = sortobject(urlMetatags);
   }
 
   res.statusCode = 200;
   res.json({ metaTags });
 };
-
-const getParsedMetaTags = async (page: puppeteer.Page, url: string) => {
-  if (!url.startsWith("http")) {
-    url = `http://${url}`;
-  }
-  await page.goto(url);
-  const metaTags: TransformedMetaTag[] = await page.evaluate(() =>
-    Array.from(document.getElementsByTagName("meta"), (tag) => {
-      const parseAttributes = (attributes: NamedNodeMap) => {
-        const attributeMap: TransformedAttributes = {};
-
-        for (let i = 0; i < attributes.length; i++) {
-          const attr = attributes.item(i);
-          attributeMap[attr.name] = attr.value;
-        }
-        return attributeMap;
-      };
-
-      return {
-        attributes: parseAttributes(tag.attributes),
-        html: tag.outerHTML,
-      };
-    })
-  );
-
-  return { metatags: parseMeta(metaTags), url };
-};
-
-interface TransformedAttributes {
-  name?: string;
-  property?: string;
-  content?: string;
-}
-
-interface TransformedMetaTag {
-  attributes: TransformedAttributes;
-  html: string;
-}
-
-type TagCollection = Array<{
-  key: string;
-  value: string | number | boolean;
-  html: string;
-}>;
-
-const createOrUpdateMap = (
-  map: TagCollection,
-  key: string,
-  value: TransformedMetaTag
-) => {
-  map.push({ key, value: value.attributes.content || "", html: value.html });
-};
-
-const parseMeta = (metaTags: TransformedMetaTag[]) => {
-  const opengraph: TagCollection = [];
-  const twitter: TagCollection = [];
-  const applink: TagCollection = [];
-  const other: TagCollection = [];
-  metaTags.forEach((tag) => {
-    const key = tag.attributes.name || tag.attributes.property;
-    if (!key) {
-      return;
-    }
-    const map = key.startsWith("og:")
-      ? opengraph
-      : key.startsWith("twitter:")
-      ? twitter
-      : key.startsWith("al:")
-      ? applink
-      : other;
-    createOrUpdateMap(map, key, tag);
-  });
-
-  return {
-    applink: sortByKey(applink),
-    opengraph: sortByKey(opengraph),
-    other: sortByKey(other),
-    twitter: sortByKey(twitter),
-  };
-};
-
-const sortByKey = (array) =>
-  array.sort((a, b) => {
-    if (a.key < b.key) {
-      return -1;
-    }
-    if (a.key > b.key) {
-      return 1;
-    }
-    return 0;
-  });

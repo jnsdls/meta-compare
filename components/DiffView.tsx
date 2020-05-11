@@ -2,10 +2,11 @@ import React, { useMemo } from "react";
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer";
 
 export enum MetaKey {
-  OG = "opengraph",
+  OG = "openGraph",
   TWITTER = "twitter",
   APPLINK = "applink",
-  OTHER = "other",
+  GENERAL = "general",
+  JSONLD = "jsonLd",
 }
 
 interface MetaData {
@@ -23,20 +24,17 @@ const TITLES = {
   [MetaKey.OG]: "OpenGraph",
   [MetaKey.TWITTER]: "Twitter",
   [MetaKey.APPLINK]: "AppLink",
-  [MetaKey.OTHER]: "Other",
+  [MetaKey.GENERAL]: "General",
+  [MetaKey.JSONLD]: "JsonLD",
 };
 
 export const DiffView: React.FC<DiffViewProps> = ({ metaData, metaKey }) => {
   const metaDataKeys = Object.keys(metaData);
   const oldMeta = useMemo(() => {
-    return metaData[metaDataKeys[0]].metatags[metaKey]
-      .map((tag) => `${tag.key}: ${tag.value}`)
-      .join("\n");
+    return JSON.stringify(metaData[metaDataKeys[0]][metaKey], null, 2);
   }, []);
   const newMeta = useMemo(() => {
-    return metaData[metaDataKeys[1]].metatags[metaKey]
-      .map((tag) => `${tag.key}: ${tag.value}`)
-      .join("\n");
+    return JSON.stringify(metaData[metaDataKeys[1]][metaKey], null, 2);
   }, []);
 
   return (
@@ -49,7 +47,8 @@ export const DiffView: React.FC<DiffViewProps> = ({ metaData, metaKey }) => {
           oldValue={oldMeta}
           newValue={newMeta}
           splitView
-          compareMethod={DiffMethod.WORDS}
+          showDiffOnly={false}
+          compareMethod={DiffMethod.LINES}
         />
       </div>
     </div>

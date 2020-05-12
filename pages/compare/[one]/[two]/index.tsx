@@ -1,37 +1,19 @@
 import React, { useMemo } from "react";
-import { NextPage, NextApiRequest } from "next/types";
+import { NextPage } from "next/types";
 import { useRouter } from "next/router";
 import useSWR from "swr";
-import { DiffView, MetaKey } from "../../../../components/DiffView";
-import { IncomingMessage } from "http";
 import fetch from "isomorphic-unfetch";
 
-const getHostName = (req?: IncomingMessage) => {
-  if (!req?.headers?.host) {
-    return "";
-  }
-
-  if (req.headers.host.startsWith("https")) {
-    return req.headers.host;
-  }
-
-  return `http://${req.headers.host}`;
-};
-
-const getURL = (urlOne: string, urlTwo: string) => {
-  return `/api?url=${urlOne}&url=${urlTwo}`;
-};
+import { DiffView, MetaKey } from "../../../../components/DiffView";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   return res.json();
 };
 
-interface CompareTwoPageProps {
-  initialData: any;
-}
+interface CompareTwoPageProps {}
 
-const CompareTwo: NextPage<CompareTwoPageProps> = ({ initialData }) => {
+const CompareTwo: NextPage<CompareTwoPageProps> = () => {
   const { query } = useRouter();
 
   const queryOne = useMemo(() => {
@@ -47,12 +29,9 @@ const CompareTwo: NextPage<CompareTwoPageProps> = ({ initialData }) => {
     }
     return query.two;
   }, [query]);
+  const apiUrl = `/api?url=${queryOne}&url=${queryTwo}`;
 
-  const url = getURL(queryOne, queryTwo);
-
-  const { data, error } = useSWR(url, fetcher, {
-    initialData,
-  });
+  const { data, error } = useSWR(apiUrl, fetcher);
 
   const loading = !data && !error;
 
@@ -70,20 +49,8 @@ const CompareTwo: NextPage<CompareTwoPageProps> = ({ initialData }) => {
   );
 };
 
-export async function getServerSideProps({ query, req }) {
-  let { one, two } = query;
-  if (Array.isArray(one)) {
-    one = one[0];
-  }
-  if (Array.isArray(two)) {
-    two = two[0];
-  }
-
-  const initialUrl = getURL(one, two);
-
-  const data = await fetcher(getHostName(req) + initialUrl);
-
-  return { props: { initialData: data } };
-}
+CompareTwo.getInitialProps = () => {
+  return {};
+};
 
 export default CompareTwo;

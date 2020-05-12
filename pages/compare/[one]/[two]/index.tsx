@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import useSWR from "swr";
 import { DiffView, MetaKey } from "../../../../components/DiffView";
 import { IncomingMessage } from "http";
+import fetch from "isomorphic-unfetch";
 
 const getHostName = (req?: IncomingMessage) => {
   if (!req?.headers?.host) {

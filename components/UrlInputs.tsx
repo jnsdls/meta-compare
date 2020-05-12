@@ -1,5 +1,6 @@
 import React, { useMemo, useCallback, useState } from "react";
 import Router, { useRouter } from "next/router";
+import Link from "next/link";
 
 export const UrlInputs: React.FC = () => {
   const { query } = useRouter();
@@ -20,14 +21,6 @@ export const UrlInputs: React.FC = () => {
   const [firstUrl, setFirstUrl] = useState<string>(queryOne || "");
   const [secondUrl, setSecondUrl] = useState<string>(queryTwo || "");
 
-  const onCompare = useCallback(() => {
-    Router.push(
-      `/compare/[one]/[two]`,
-      `/compare/${encodeURIComponent(firstUrl)}/${encodeURIComponent(
-        secondUrl
-      )}`
-    );
-  }, [firstUrl, secondUrl]);
   return (
     <div className="grid grid-cols-3 gap1 p-2">
       <div className="mb-4">
@@ -65,12 +58,16 @@ export const UrlInputs: React.FC = () => {
         />
       </div>
       <div className="mb-4">
-        <button
-          onClick={onCompare}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        <Link
+          href="/compare/[one]/[two]"
+          as={`/compare/${encodeURIComponent(firstUrl)}/${encodeURIComponent(
+            secondUrl
+          )}`}
         >
-          Compare
-        </button>
+          <a className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Compare
+          </a>
+        </Link>
       </div>
     </div>
   );

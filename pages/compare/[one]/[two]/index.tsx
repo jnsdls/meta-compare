@@ -1,19 +1,36 @@
 import React, { useMemo } from "react";
-import { NextPage } from "next/types";
+import { NextPage, NextApiRequest } from "next/types";
 import { useRouter } from "next/router";
 import useSWR from "swr";
-import fetch from "isomorphic-unfetch";
-
 import { DiffView, MetaKey } from "../../../../components/DiffView";
+import { IncomingMessage } from "http";
+
+const getHostName = (req?: IncomingMessage) => {
+  if (!req?.headers?.host) {
+    return "";
+  }
+
+  if (req.headers.host.startsWith("https")) {
+    return req.headers.host;
+  }
+
+  return `http://${req.headers.host}`;
+};
+
+const getURL = (urlOne: string, urlTwo: string) => {
+  return `/api?url=${urlOne}&url=${urlTwo}`;
+};
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   return res.json();
 };
 
-interface CompareTwoPageProps {}
+interface CompareTwoPageProps {
+  initialData: any;
+}
 
-const CompareTwo: NextPage<CompareTwoPageProps> = () => {
+const CompareTwo: NextPage<CompareTwoPageProps> = ({ initialData }) => {
   const { query } = useRouter();
 
   const queryOne = useMemo(() => {
@@ -29,9 +46,12 @@ const CompareTwo: NextPage<CompareTwoPageProps> = () => {
     }
     return query.two;
   }, [query]);
-  const apiUrl = `/api?url=${queryOne}&url=${queryTwo}`;
 
-  const { data, error } = useSWR(apiUrl, fetcher);
+  const url = getURL(queryOne, queryTwo);
+
+  const { data, error } = useSWR(url, fetcher, {
+    initialData,
+  });
 
   const loading = !data && !error;
 
@@ -49,8 +69,20 @@ const CompareTwo: NextPage<CompareTwoPageProps> = () => {
   );
 };
 
-CompareTwo.getInitialProps = () => {
-  return {};
-};
+export async function getServerSideProps({ query, req }) {
+  let { one, two } = query;
+  if (Array.isArray(one)) {
+    one = one[0];
+  }
+  if (Array.isArray(two)) {
+    two = two[0];
+  }
+
+  const initialUrl = getURL(one, two);
+
+  const data = await fetcher(getHostName(req) + initialUrl);
+
+  return { props: { initialData: data } };
+}
 
 export default CompareTwo;
